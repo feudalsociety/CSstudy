@@ -17,6 +17,7 @@ namespace CSstudy
         public int Level { get; set; }
         public int Hp { get; set; }
         public int Attack { get; set; }
+        public List<int> items { get; set; } = new List<int>();
     }
 
     internal class Program
@@ -54,6 +55,9 @@ namespace CSstudy
                     Attack = rand.Next(5, 50)
                 };
 
+                for (int j = 0; j < 5; j++)
+                    player.items.Add(rand.Next(1, 100));
+
                 _players.Add(player);
             }
 
@@ -83,6 +87,55 @@ namespace CSstudy
                     Console.WriteLine($"{p.Level}, {p.Hp}");
                 }
             }
+
+            // 중첩 from
+            {
+                // 모든 item 목록을 추출
+                var playerItems = 
+                    from p in _players
+                    from i in p.items
+                    where i < 30
+                    select new { p, i };
+
+                var li = playerItems.ToList();
+            }
+
+            // grouping
+            {
+                var playersByLevel = from p in _players
+                                     group p by p.Level into g // group 이름 g
+                                     orderby g.Key // level 별로 group 정렬
+                                     select new { g.Key, Players = g };
+            }
+
+            // join 내부 조인
+            // outer join 외부 조인
+            {
+                List<int> levels = new List<int>() { 1, 5, 10 };
+                var playerLevels = 
+                    from p in _players
+                    join l in levels
+                    on p.Level equals l
+                    select p;
+            }
+
+            // 2가지 버전
+            // LINQ 표준 연산자
+            {
+                // 1
+                var players =
+                    from p in _players
+                    where p.ClassType == ClassType.Knight && p.Level >= 50
+                    orderby p.Level 
+                    select p;
+
+                // 2, 1에는 없는기능이 2에는 있다
+                // entity framework
+                _players
+                    .Where(p => p.ClassType == ClassType.Knight && p.Level >= 50)
+                    .OrderBy(p => p.Level)
+                    .Select(p => p);
+            }
         }
 
         static public List<Player> GetHighLevelKnights()
@@ -103,11 +156,11 @@ namespace CSstudy
             return players;
         }
     }
-
+}
     // Unity 할때는 굳이 LINQ를 사용하지 않고 예전에는 ios관련 버그가 있었음
     // WebServer에서만 활용
 
     // Database와 연동해서 데이터를 뽑아온다거나 할 때 MS에서 제품들이 어느정도 호환이됨
     // 간단하게 LINQ로만 질의를 했더니 실제로 DB에서 데이터를 추출하거나 하는 기술들이 있음
     // 편하게 사용할 수 있는 기술들이 많이 있음
-}
+
